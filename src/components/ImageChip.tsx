@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Check, Loader2, X, ArrowUpCircle } from 'lucide-react';
+import { Check, Loader2, X, ArrowUpCircle, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UploadedImage } from '@/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface ImageChipProps {
   image: UploadedImage;
@@ -12,6 +14,8 @@ interface ImageChipProps {
 
 export const ImageChip = ({ image, isExpanded, onToggleExpand, onRemove }: ImageChipProps) => {
   const [imageError, setImageError] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [modalImage, setModalImage] = useState<{ url: string; title: string } | null>(null);
 
   const getStatusIcon = () => {
     switch (image.uploadStatus) {
@@ -38,6 +42,28 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand, onRemove }: Image
   };
 
   const canExpand = image.uploadStatus === 'completed' && !imageError;
+
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `upscaled_${filename}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
+  };
+
+  const openImageModal = (url: string, title: string) => {
+    setModalImage({ url, title });
+    setShowImageModal(true);
+  };
 
   return (
     <div className="w-full">
@@ -115,29 +141,64 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand, onRemove }: Image
             {/* Original */}
             <div className="space-y-3">
               <h5 className="font-medium text-muted-foreground">Original</h5>
-              <div className="relative rounded-lg overflow-hidden bg-muted">
+              <div 
+                className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => openImageModal(image.originalUrl, `Original ${image.name}`)}
+              >
                 <img
                   src={image.originalUrl}
                   alt={`Original ${image.name}`}
-                  className="w-full h-auto"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
 
             {/* Upscaled */}
             <div className="space-y-3">
-              <h5 className="font-medium text-muted-foreground">Upscaled (2x)</h5>
-              <div className="relative rounded-lg overflow-hidden bg-muted">
+              <div className="flex items-center justify-between">
+                <h5 className="font-medium text-muted-foreground">Upscaled</h5>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownload(image.upscaledUrl!, image.name)}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </Button>
+              </div>
+              <div 
+                className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => openImageModal(image.upscaledUrl!, `Upscaled ${image.name}`)}
+              >
                 <img
                   src={image.upscaledUrl}
                   alt={`Upscaled ${image.name}`}
-                  className="w-full h-auto"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Image Modal */}
+      <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle>{modalImage?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            {modalImage && (
+              <img
+                src={modalImage.url}
+                alt={modalImage.title}
+                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
