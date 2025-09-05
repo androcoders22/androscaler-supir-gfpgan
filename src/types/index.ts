@@ -4,9 +4,11 @@ export interface UploadedImage {
   originalUrl: string;
   upscaledUrl?: string;
   uploadProgress: number;
-  uploadStatus: 'uploading' | 'uploaded' | 'upscaling' | 'completed' | 'error';
+  uploadStatus: 'uploading' | 'uploaded' | 'upscaling' | 'color-grading' | 'saving' | 'completed' | 'error';
   name: string;
   size: number;
+  folderName?: string;
+  apiOriginalUrl?: string;
 }
 
 export type UploadStatus = 'idle' | 'uploading' | 'processing' | 'completed';

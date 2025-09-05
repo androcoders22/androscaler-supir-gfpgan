@@ -1,14 +1,6 @@
 import { useState, useCallback } from 'react';
 import { UploadedImage } from '@/types';
-
-// Demo upscaled images (placeholder URLs)
-const DEMO_UPSCALED_URLS = [
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200',
-  'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1200',
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200',
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200',
-  'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1200',
-];
+import { apiService } from '@/services/api';
 
 export const useImageUploader = () => {
   const [images, setImages] = useState<UploadedImage[]>([]);
@@ -23,70 +15,74 @@ export const useImageUploader = () => {
       uploadStatus: 'uploading',
       name: file.name,
       size: file.size,
+      folderName: `folder_${Date.now()}_${index}`,
     }));
 
     setImages(prev => [...prev, ...newImages]);
 
-    // Simulate concurrent uploads
-    newImages.forEach((image, index) => {
-      simulateUpload(image.id, index * 500); // Stagger uploads slightly
+    newImages.forEach((image) => {
+      setTimeout(() => processImage(image.id), 100);
     });
   }, []);
 
-  const simulateUpload = useCallback((imageId: string, delay: number = 0) => {
-    setTimeout(() => {
-      let progress = 0;
-      const uploadInterval = setInterval(() => {
-        progress += Math.random() * 20 + 5; // Random progress increment
-        
-        if (progress >= 100) {
-          clearInterval(uploadInterval);
-          
-          setImages(prev => prev.map(img => 
-            img.id === imageId 
-              ? { ...img, uploadProgress: 100, uploadStatus: 'uploaded' }
-              : img
-          ));
-
-          // Start upscaling after upload completes
-          setTimeout(() => {
-            simulateUpscaling(imageId);
-          }, 500);
-        } else {
-          setImages(prev => prev.map(img => 
-            img.id === imageId 
-              ? { ...img, uploadProgress: Math.min(progress, 100) }
-              : img
-          ));
-        }
-      }, 200);
-    }, delay);
-  }, []);
-
-  const simulateUpscaling = useCallback((imageId: string) => {
-    setImages(prev => prev.map(img => 
-      img.id === imageId 
-        ? { ...img, uploadStatus: 'upscaling' }
-        : img
-    ));
-
-    // Simulate upscaling process (2-4 seconds)
-    const upscalingDuration = Math.random() * 2000 + 2000;
-    
-    setTimeout(() => {
-      const randomUpscaledUrl = DEMO_UPSCALED_URLS[Math.floor(Math.random() * DEMO_UPSCALED_URLS.length)];
+  const processImage = useCallback(async (imageId: string) => {
+    try {
+      let currentImage: UploadedImage | undefined;
+      setImages(prev => {
+        currentImage = prev.find(img => img.id === imageId);
+        return prev.map(img => 
+          img.id === imageId ? { ...img, uploadProgress: 25, uploadStatus: 'uploading' as const } : img
+        );
+      });
+      
+      if (!currentImage) return;
+      
+      const uploadResult = await apiService.uploadImage(currentImage.file, currentImage.folderName!);
+      console.log('✅ UPLOAD DONE:', uploadResult.view_url);
       
       setImages(prev => prev.map(img => 
-        img.id === imageId 
-          ? { 
-              ...img, 
-              uploadStatus: 'completed',
-              upscaledUrl: randomUpscaledUrl 
-            }
-          : img
+        img.id === imageId ? { 
+          ...img, 
+          uploadProgress: 50, 
+          uploadStatus: 'upscaling' as const,
+          apiOriginalUrl: uploadResult.view_url
+        } : img
       ));
-    }, upscalingDuration);
+
+      const upscaleResult = await apiService.upscaleImage(uploadResult.view_url);
+      console.log('✅ UPSCALE DONE:', upscaleResult.upscaled_url);
+      
+      setImages(prev => prev.map(img => 
+        img.id === imageId ? { ...img, uploadProgress: 70, uploadStatus: 'color-grading' as const } : img
+      ));
+
+      const colorGradeResult = await apiService.colorGrade(upscaleResult.upscaled_url);
+      console.log('✅ COLOR GRADING DONE:', colorGradeResult.view_url);
+      
+      setImages(prev => prev.map(img => 
+        img.id === imageId ? { ...img, uploadProgress: 90, uploadStatus: 'saving' as const } : img
+      ));
+
+      const saveResult = await apiService.saveProcessedImage(colorGradeResult.view_url, currentImage.folderName!);
+      console.log('✅ SAVE DONE:', saveResult.view_url);
+      
+      setImages(prev => prev.map(img => 
+        img.id === imageId ? { 
+          ...img, 
+          uploadProgress: 100, 
+          uploadStatus: 'completed' as const,
+          upscaledUrl: saveResult.view_url
+        } : img
+      ));
+    } catch (error) {
+      console.error('❌ ERROR:', error);
+      setImages(prev => prev.map(img => 
+        img.id === imageId ? { ...img, uploadStatus: 'error' as const } : img
+      ));
+    }
   }, []);
+
+
 
   const removeImage = useCallback((imageId: string) => {
     setImages(prev => {

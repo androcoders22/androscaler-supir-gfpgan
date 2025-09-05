@@ -17,7 +17,7 @@ export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
         file.type.startsWith('image/')
       );
       if (files.length > 0) {
-        onFilesSelected(files.slice(0, 5)); // Max 5 files
+        onFilesSelected(files);
       }
     },
     [onFilesSelected, disabled]
@@ -26,14 +26,14 @@ export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (disabled) return;
-      
+
       const files = Array.from(e.target.files || []).filter(file =>
         file.type.startsWith('image/')
       );
       if (files.length > 0) {
-        onFilesSelected(files.slice(0, 5)); // Max 5 files
+        onFilesSelected(files);
       }
-      e.target.value = ''; // Reset input
+      e.target.value = '';
     },
     [onFilesSelected, disabled]
   );
@@ -63,12 +63,11 @@ export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
         )}
       >
         <div className="absolute inset-0 primary-gradient opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-        
+
         <div className="relative z-10 text-center space-y-6">
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-glow" />
-            <div className="relative bg-primary/10 p-6 rounded-full border border-primary/20">
-              <Upload className="w-12 h-12 text-primary animate-float" />
+          <div className="relative flex items-center justify-center">
+            <div className="relative flex items-center gap-4 bg-primary/10 p-6 rounded-full border border-primary/20">
+              <Upload className="w-12 h-12 text-white animate-float" />
             </div>
           </div>
 
@@ -77,11 +76,11 @@ export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
               Drop your images here
             </h3>
             <p className="text-muted-foreground max-w-md">
-              Select up to 5 images to upscale. Supports JPG, PNG, WEBP formats.
+              Select images to upscale. Supports JPG, PNG, WEBP formats.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-foreground/80">
+          <div className="flex justify-center items-center gap-2 text-sm text-foreground/80">
             <ImageIcon className="w-4 h-4" />
             <span>Click to browse or drag and drop</span>
           </div>

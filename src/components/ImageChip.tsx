@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Loader2, X, ArrowUpCircle, Download } from 'lucide-react';
+import { Check, Loader2, ArrowUpCircle, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UploadedImage } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,10 +9,9 @@ interface ImageChipProps {
   image: UploadedImage;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  onRemove: () => void;
 }
 
-export const ImageChip = ({ image, isExpanded, onToggleExpand, onRemove }: ImageChipProps) => {
+export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps) => {
   const [imageError, setImageError] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [modalImage, setModalImage] = useState<{ url: string; title: string } | null>(null);
@@ -33,7 +32,7 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand, onRemove }: Image
       case 'error':
         return (
           <div className="bg-destructive rounded-full p-1">
-            <X className="w-3 h-3 text-destructive-foreground" />
+            <span className="text-xs text-destructive-foreground font-bold">!</span>
           </div>
         );
       default:
@@ -106,32 +105,13 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand, onRemove }: Image
             </p>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
+          {/* Status */}
+          <div className="flex items-center">
             {getStatusIcon()}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove();
-              }}
-              className="p-1 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
         </div>
 
-        {/* Progress bar for uploading */}
-        {image.uploadStatus === 'uploading' && (
-          <div className="px-4 pb-4">
-            <div className="w-full bg-muted rounded-full h-1">
-              <div
-                className="h-1 primary-gradient rounded-full transition-all duration-300"
-                style={{ width: `${image.uploadProgress}%` }}
-              />
-            </div>
-          </div>
-        )}
+
       </div>
 
       {/* Expanded comparison view */}

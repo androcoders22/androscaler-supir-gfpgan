@@ -15,7 +15,6 @@ export const ImageUploader = () => {
   } = useImageUploader();
 
   const hasImages = images.length > 0;
-  const canAddMore = images.length < 5;
 
   if (!hasImages) {
     return <DropZone onFilesSelected={addFiles} />;
@@ -27,35 +26,21 @@ export const ImageUploader = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-foreground">Image Upscaler</h1>
+            <h1 className="text-2xl font-bold text-foreground">Upscaler</h1>
             <p className="text-muted-foreground">
-              {images.length} of 5 images • {images.filter(img => img.uploadStatus === 'completed').length} completed
+              {images.length} images • {images.filter(img => img.uploadStatus === 'completed').length} completed
             </p>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={resetAll}
-              className="gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset
-            </Button>
-            
-            {canAddMore && (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => document.getElementById('file-input')?.click()}
-                className="gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Add More
-              </Button>
-            )}
-          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetAll}
+            className="gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset
+          </Button>
         </div>
 
         {/* Images List */}
@@ -66,29 +51,25 @@ export const ImageUploader = () => {
               image={image}
               isExpanded={expandedImageId === image.id}
               onToggleExpand={() => toggleExpanded(image.id)}
-              onRemove={() => removeImage(image.id)}
             />
           ))}
         </div>
 
-        {/* Add more dropzone */}
-        {canAddMore && (
-          <div className="pt-6">
-            <div
-              onClick={() => document.getElementById('file-input')?.click()}
-              className="card-gradient border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer transition-all duration-300 hover:border-primary/50 group"
-            >
-              <div className="space-y-2">
-                <div className="w-8 h-8 mx-auto bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <ArrowLeft className="w-4 h-4 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Add {5 - images.length} more image{5 - images.length !== 1 ? 's' : ''}
-                </p>
+        <div className="pt-6">
+          <div
+            onClick={() => document.getElementById('file-input')?.click()}
+            className="card-gradient border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer transition-all duration-300 hover:border-primary/50 group"
+          >
+            <div className="space-y-2">
+              <div className="w-8 h-8 mx-auto bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <ArrowLeft className="w-4 h-4 text-primary" />
               </div>
+              <p className="text-sm text-muted-foreground">
+                Add more images
+              </p>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Hidden file input */}
         <input
@@ -101,8 +82,7 @@ export const ImageUploader = () => {
               file.type.startsWith('image/')
             );
             if (files.length > 0) {
-              const remainingSlots = 5 - images.length;
-              addFiles(files.slice(0, remainingSlots));
+              addFiles(files);
             }
             e.target.value = '';
           }}
