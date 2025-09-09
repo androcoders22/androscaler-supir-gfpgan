@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_BASE = 'http://45.194.3.227:8000';
+const COLOR_GRADE_API = 'http://45.194.3.227:8001/process-image/';
 
 export interface UploadResponse {
   view_url: string;
@@ -10,6 +11,11 @@ export interface UploadResponse {
 export interface UpscaleResponse {
   message: string;
   upscaled_url: string;
+}
+
+export interface ColorGradeResponse {
+  message: string;
+  view_url: string;
 }
 
 const api = axios.create({
@@ -28,15 +34,14 @@ export const apiService = {
   },
 
   async upscaleImage(imageUrl: string): Promise<UpscaleResponse> {
-    const formData = new FormData();
-    formData.append('image_url', imageUrl);
-
-    const response = await api.post('/upscale/', formData);
+    const response = await api.post('/upscale/', { image_url: imageUrl });
     return response.data;
   },
 
-  async colorGrade(imageUrl: string): Promise<UpscaleResponse> {
-    const response = await api.post('/color_grade/', { image_url: imageUrl });
+  async colorGrade(imageUrl: string): Promise<ColorGradeResponse> {
+    const response = await axios.post(COLOR_GRADE_API, {
+      image_link: imageUrl
+    });
     return response.data;
   },
 

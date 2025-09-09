@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Loader2, ArrowUpCircle, Download } from 'lucide-react';
+import { Check, Loader2, ArrowUpCircle, Download, CloudAlert  } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UploadedImage } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -22,6 +22,7 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
         return <Loader2 className="w-5 h-5 animate-spin text-primary" />;
       case 'uploaded':
       case 'upscaling':
+      case 'color-grading':
         return <Loader2 className="w-5 h-5 animate-spin text-primary" />;
       case 'completed':
         return (
@@ -31,8 +32,8 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
         );
       case 'error':
         return (
-          <div className="bg-destructive rounded-full p-1">
-            <span className="text-xs text-destructive-foreground font-bold">!</span>
+          <div className="bg-destructive rounded-lg p-1">
+            <CloudAlert  size={18} />
           </div>
         );
       default:
@@ -101,6 +102,7 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
             <p className="text-sm text-muted-foreground">
               {(image.size / 1024 / 1024).toFixed(2)} MB
               {image.uploadStatus === 'upscaling' && ' • Upscaling...'}
+              {image.uploadStatus === 'color-grading' && ' • Color grading...'}
               {image.uploadStatus === 'completed' && ' • Ready'}
             </p>
           </div>
@@ -110,8 +112,6 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
             {getStatusIcon()}
           </div>
         </div>
-
-
       </div>
 
       {/* Expanded comparison view */}
@@ -121,7 +121,7 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
             {/* Original */}
             <div className="space-y-3">
               <h5 className="font-medium text-muted-foreground">Original</h5>
-              <div 
+              <div
                 className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => openImageModal(image.originalUrl, `Original ${image.name}`)}
               >
@@ -147,7 +147,7 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
                   Download
                 </Button>
               </div>
-              <div 
+              <div
                 className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => openImageModal(image.upscaledUrl!, `Upscaled ${image.name}`)}
               >
