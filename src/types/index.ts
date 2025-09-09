@@ -9,6 +9,9 @@ export interface UploadedImage {
   size: number;
   folderName?: string;
   apiOriginalUrl?: string;
+  startTime?: number;
+  processingTime?: number;
+  originalFileName?: string;
 }
 
 export type UploadStatus = 'idle' | 'uploading' | 'processing' | 'completed';

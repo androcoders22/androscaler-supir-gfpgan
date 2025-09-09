@@ -16,6 +16,8 @@ export const useImageUploader = () => {
       name: file.name,
       size: file.size,
       folderName: `folder_${Date.now()}_${index}`,
+      startTime: Date.now(),
+      originalFileName: file.name,
     }));
 
     setImages(prev => [...prev, ...newImages]);
@@ -44,30 +46,41 @@ export const useImageUploader = () => {
         img.id === imageId ? {
           ...img,
           uploadProgress: 50,
-          uploadStatus: 'upscaling' as const,
+          uploadStatus: 'color-grading' as const,
           apiOriginalUrl: uploadResult.view_url
         } : img
       ));
 
-      const upscaleResult = await apiService.upscaleImage(uploadResult.view_url);
-      console.log('✅ UPSCALE DONE:', upscaleResult.upscaled_url);
-
-      console.log('✅ UPSCALE img url:', upscaleResult.upscaled_url);
-      setImages(prev => prev.map(img =>
-        img.id === imageId ? { ...img, uploadProgress: 70, uploadStatus: 'color-grading' as const } : img
-      ));
-
-      const colorGradeResult = await apiService.colorGrade(upscaleResult.upscaled_url);
+      const colorGradeResult = await apiService.colorGrade(uploadResult.view_url);
       console.log('✅ COLOR GRADING DONE:', colorGradeResult.view_url);
 
       setImages(prev => prev.map(img =>
-        img.id === imageId ? {
-          ...img,
-          uploadProgress: 100,
-          uploadStatus: 'completed' as const,
-          upscaledUrl: colorGradeResult.view_url
-        } : img
+        img.id === imageId ? { ...img, uploadProgress: 70, uploadStatus: 'upscaling' as const } : img
       ));
+
+      const upscaleResult = await apiService.upscaleImage(colorGradeResult.view_url);
+      console.log('✅ UPSCALE DONE:', upscaleResult.upscaled_url);
+
+      setImages(prev => prev.map(img =>
+        img.id === imageId ? { ...img, uploadProgress: 85, uploadStatus: 'uploading' as const } : img
+      ));
+
+      const fixResult = await apiService.fixImageMetadata(uploadResult.view_url, upscaleResult.upscaled_url);
+      console.log('✅ FIX METADATA DONE:', fixResult.final_image.view_url);
+
+      setImages(prev => prev.map(img => {
+        if (img.id === imageId) {
+          const processingTime = img.startTime ? Math.round((Date.now() - img.startTime) / 1000) : 0;
+          return {
+            ...img,
+            uploadProgress: 100,
+            uploadStatus: 'completed' as const,
+            upscaledUrl: fixResult.final_image.view_url,
+            processingTime
+          };
+        }
+        return img;
+      }));
     } catch (error) {
       console.error('❌ ERROR:', error);
       setImages(prev => prev.map(img =>

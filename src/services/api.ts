@@ -18,6 +18,13 @@ export interface ColorGradeResponse {
   view_url: string;
 }
 
+export interface FixImageResponse {
+  final_image: {
+    message: string;
+    view_url: string;
+  };
+}
+
 const api = axios.create({
   baseURL: API_BASE,
   timeout: 0, // No timeout
@@ -40,7 +47,9 @@ export const apiService = {
 
   async colorGrade(imageUrl: string): Promise<ColorGradeResponse> {
     const response = await axios.post(COLOR_GRADE_API, {
-      image_link: imageUrl
+      image_link: imageUrl,
+      use_jpg: false,
+      inference_steps: 25
     });
     return response.data;
   },
@@ -49,6 +58,14 @@ export const apiService = {
     const response = await api.post('/save_processed/', {
       processed_url: processedUrl,
       folder_name: folderName
+    });
+    return response.data;
+  },
+
+  async fixImageMetadata(beforeUrl: string, afterUrl: string): Promise<FixImageResponse> {
+    const response = await axios.post('http://45.194.3.227:8001/fix-image-misc/', {
+      before: beforeUrl,
+      after: afterUrl
     });
     return response.data;
   },

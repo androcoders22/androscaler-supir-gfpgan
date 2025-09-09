@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Loader2, ArrowUpCircle, Download, CloudAlert  } from 'lucide-react';
+import { Check, Loader2, ArrowUpCircle, Download, CloudAlert, SplitSquareHorizontal, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UploadedImage } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,6 +15,8 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
   const [imageError, setImageError] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [modalImage, setModalImage] = useState<{ url: string; title: string } | null>(null);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [sliderPosition, setSliderPosition] = useState(50);
 
   const getStatusIcon = () => {
     switch (image.uploadStatus) {
@@ -43,14 +45,19 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
 
   const canExpand = image.uploadStatus === 'completed' && !imageError;
 
-  const handleDownload = async (url: string, filename: string) => {
+  const handleDownload = async (url: string, originalFileName: string) => {
     try {
       const response = await fetch(url);
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `upscaled_${filename}`;
+
+      // Use original file name with upscaled prefix
+      const fileExtension = originalFileName.split('.').pop();
+      const baseName = originalFileName.replace(/\.[^/.]+$/, '');
+      link.download = `${baseName}_final.${fileExtension}`;
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -101,14 +108,45 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
             <h4 className="font-medium text-foreground truncate">{image.name}</h4>
             <p className="text-sm text-muted-foreground">
               {(image.size / 1024 / 1024).toFixed(2)} MB
-              {image.uploadStatus === 'upscaling' && ' • Upscaling...'}
+              {image.uploadStatus === 'uploading' && ' • Uploading...'}
               {image.uploadStatus === 'color-grading' && ' • Color grading...'}
-              {image.uploadStatus === 'completed' && ' • Ready'}
+              {image.uploadStatus === 'upscaling' && ' • Upscaling...'}
+              {image.uploadStatus === 'completed' && image.processingTime && (
+                <span className="inline-flex items-center gap-1 ml-1">
+                  • <Clock className="w-3 h-3" /> {image.processingTime}s
+                </span>
+              )}
             </p>
           </div>
 
+
           {/* Status */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            {image.uploadStatus === 'completed' && image.upscaledUrl && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setComparisonMode(!comparisonMode);
+                  }}
+                  className={cn(
+                    "p-1 rounded-full hover:bg-primary/10 transition-colors",
+                    comparisonMode ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary"
+                  )}
+                >
+                  <SplitSquareHorizontal className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(image.upscaledUrl!, image.originalFileName || image.name);
+                  }}
+                  className="p-1 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </>
+            )}
             {getStatusIcon()}
           </div>
         </div>
@@ -117,48 +155,80 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
       {/* Expanded comparison view */}
       {isExpanded && image.uploadStatus === 'completed' && image.upscaledUrl && (
         <div className="card-gradient border-x border-b border-border rounded-b-xl p-6 animate-in slide-in-from-top-2 duration-300">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Original */}
+          {comparisonMode ? (
+            /* Slider Comparison */
             <div className="space-y-3">
-              <h5 className="font-medium text-muted-foreground">Original</h5>
-              <div
-                className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => openImageModal(image.originalUrl, `Original ${image.name}`)}
-              >
-                <img
-                  src={image.originalUrl}
-                  alt={`Original ${image.name}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-
-            {/* Upscaled */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h5 className="font-medium text-muted-foreground">Upscaled</h5>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDownload(image.upscaledUrl!, image.name)}
-                  className="gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </Button>
-              </div>
-              <div
-                className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => openImageModal(image.upscaledUrl!, `Upscaled ${image.name}`)}
-              >
+              <h5 className="font-medium text-muted-foreground text-center">Comparison</h5>
+              <div className="relative rounded-lg overflow-hidden bg-muted aspect-square">
+                {/* Upscaled Image (Background) */}
                 <img
                   src={image.upscaledUrl}
                   alt={`Upscaled ${image.name}`}
-                  className="w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
+                {/* Original Image (Clipped) */}
+                <div
+                  className="absolute inset-0 overflow-hidden"
+                  style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
+                >
+                  <img
+                    src={image.originalUrl}
+                    alt={`Original ${image.name}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {/* Slider */}
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg cursor-ew-resize"
+                  style={{ left: `${sliderPosition}%` }}
+                />
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={sliderPosition}
+                  onChange={(e) => setSliderPosition(Number(e.target.value))}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize"
+                />
+                {/* Labels */}
+                <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">Original</div>
+                <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">Upscaled</div>
               </div>
             </div>
-          </div>
+          ) : (
+            /* Side by Side */
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Original */}
+              <div className="space-y-3">
+                <h5 className="font-medium text-muted-foreground">Original</h5>
+                <div
+                  className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => openImageModal(image.originalUrl, `Original ${image.name}`)}
+                >
+                  <img
+                    src={image.originalUrl}
+                    alt={`Original ${image.name}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+
+              {/* Upscaled */}
+              <div className="space-y-3">
+                <h5 className="font-medium text-muted-foreground">Upscaled</h5>
+                <div
+                  className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => openImageModal(image.upscaledUrl!, `Upscaled ${image.name}`)}
+                >
+                  <img
+                    src={image.upscaledUrl}
+                    alt={`Upscaled ${image.name}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
