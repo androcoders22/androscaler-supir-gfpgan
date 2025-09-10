@@ -232,7 +232,7 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
 
               {/* Final */}
               <div className="space-y-3">
-                <h5 className="font-medium text-muted-foreground">(Downsized) 180 DPI</h5>
+                <h5 className="font-medium text-muted-foreground">Downsized <span className="text-muted-foreground/60">200 PPI</span></h5>
                 <div
                   className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => openImageModal(image.upscaledUrl!, `Final ${image.name}`)}
