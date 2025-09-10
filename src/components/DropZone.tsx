@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Upload, ImageIcon, CloudUpload } from "lucide-react";
+import { ImageIcon, CloudUpload } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DropZoneProps {
@@ -102,8 +102,7 @@ export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
         <div
           className="text-secondary cursor-default w-5 h-5"
           onClick={() => window.open("https://mohammad.is-a.dev", "_blank")}
-        >
-        </div>
+        ></div>
       </div>
     </div>
   );
