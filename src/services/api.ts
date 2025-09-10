@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const API_BASE = 'http://45.194.3.227:8000';
-const COLOR_GRADE_API = 'http://45.194.3.227:8001/process-image/';
+const API_BASE = 'https://upscaler.mfdcmaharashtra.co.in';
+const COLOR_GRADE_API = 'https://color.mfdcmaharashtra.co.in';
+const FIX_IMAGE_API = 'https://color.mfdcmaharashtra.co.in/fix-image-misc';
 
 export interface UploadResponse {
   view_url: string;
@@ -27,7 +28,6 @@ export interface FixImageResponse {
 
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 0, // No timeout
 });
 
 export const apiService = {
@@ -36,26 +36,24 @@ export const apiService = {
     formData.append('file', file);
     formData.append('folder_name', folderName);
 
-    const response = await api.post('/image_upload/', formData);
+    const response = await api.post('/image_upload', formData);
     return response.data;
   },
 
   async upscaleImage(imageUrl: string): Promise<UpscaleResponse> {
-    const response = await api.post('/upscale/', { image_url: imageUrl });
+    const response = await api.post('/upscale', { image_url: imageUrl });
     return response.data;
   },
 
   async colorGrade(imageUrl: string): Promise<ColorGradeResponse> {
-    const response = await axios.post(COLOR_GRADE_API, {
-      image_link: imageUrl,
-      use_jpg: false,
-      inference_steps: 25
+    const response = await axios.post(`${COLOR_GRADE_API}/process-image`, {
+      image_link: imageUrl
     });
     return response.data;
   },
 
   async saveProcessedImage(processedUrl: string, folderName: string): Promise<UploadResponse> {
-    const response = await api.post('/save_processed/', {
+    const response = await api.post('/save_processed', {
       processed_url: processedUrl,
       folder_name: folderName
     });
@@ -63,7 +61,7 @@ export const apiService = {
   },
 
   async fixImageMetadata(beforeUrl: string, afterUrl: string): Promise<FixImageResponse> {
-    const response = await axios.post('http://45.194.3.227:8001/fix-image-misc/', {
+    const response = await axios.post(FIX_IMAGE_API, {
       before: beforeUrl,
       after: afterUrl
     });

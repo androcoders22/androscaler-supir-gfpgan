@@ -2,48 +2,31 @@ import { useState, useCallback } from 'react';
 import { UploadedImage } from '@/types';
 import { apiService } from '@/services/api';
 
+let isProcessing = false;
+let queue: UploadedImage[] = [];
+
 export const useImageUploader = () => {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [expandedImageId, setExpandedImageId] = useState<string | null>(null);
 
-  const addFiles = useCallback((files: File[]) => {
-    const newImages: UploadedImage[] = files.map((file, index) => ({
-      id: `${Date.now()}-${index}`,
-      file,
-      originalUrl: URL.createObjectURL(file),
-      uploadProgress: 0,
-      uploadStatus: 'uploading',
-      name: file.name,
-      size: file.size,
-      folderName: `folder_${Date.now()}_${index}`,
-      startTime: Date.now(),
-      originalFileName: file.name,
-    }));
-
-    setImages(prev => [...prev, ...newImages]);
-
-    newImages.forEach((image) => {
-      setTimeout(() => processImage(image.id), 100);
-    });
-  }, []);
-
-  const processImage = useCallback(async (imageId: string) => {
+  const processNext = async () => {
+    if (isProcessing || queue.length === 0) return;
+    
+    isProcessing = true;
+    const image = queue.shift()!;
+    
     try {
-      let currentImage: UploadedImage | undefined;
-      setImages(prev => {
-        currentImage = prev.find(img => img.id === imageId);
-        return prev.map(img =>
-          img.id === imageId ? { ...img, uploadProgress: 25, uploadStatus: 'uploading' as const } : img
-        );
-      });
+      console.log('🚀 Processing:', image.name);
+      
+      setImages(prev => prev.map(img =>
+        img.id === image.id ? { ...img, uploadProgress: 25, uploadStatus: 'uploading' as const } : img
+      ));
 
-      if (!currentImage) return;
-
-      const uploadResult = await apiService.uploadImage(currentImage.file, currentImage.folderName!);
-      console.log('✅ UPLOAD DONE:', uploadResult.view_url);
+      const uploadResult = await apiService.uploadImage(image.file, image.folderName!);
+      console.log('✅ UPLOAD DONE');
 
       setImages(prev => prev.map(img =>
-        img.id === imageId ? {
+        img.id === image.id ? {
           ...img,
           uploadProgress: 50,
           uploadStatus: 'color-grading' as const,
@@ -52,24 +35,24 @@ export const useImageUploader = () => {
       ));
 
       const colorGradeResult = await apiService.colorGrade(uploadResult.view_url);
-      console.log('✅ COLOR GRADING DONE:', colorGradeResult.view_url);
+      console.log('✅ COLOR GRADING DONE');
 
       setImages(prev => prev.map(img =>
-        img.id === imageId ? { ...img, uploadProgress: 70, uploadStatus: 'upscaling' as const } : img
+        img.id === image.id ? { ...img, uploadProgress: 70, uploadStatus: 'upscaling' as const } : img
       ));
 
       const upscaleResult = await apiService.upscaleImage(colorGradeResult.view_url);
-      console.log('✅ UPSCALE DONE:', upscaleResult.upscaled_url);
+      console.log('✅ UPSCALE DONE');
 
       setImages(prev => prev.map(img =>
-        img.id === imageId ? { ...img, uploadProgress: 85, uploadStatus: 'uploading' as const } : img
+        img.id === image.id ? { ...img, uploadProgress: 85, uploadStatus: 'uploading' as const } : img
       ));
 
       const fixResult = await apiService.fixImageMetadata(uploadResult.view_url, upscaleResult.upscaled_url);
-      console.log('✅ FIX METADATA DONE:', fixResult.final_image.view_url);
+      console.log('✅ FIX METADATA DONE');
 
       setImages(prev => prev.map(img => {
-        if (img.id === imageId) {
+        if (img.id === image.id) {
           const processingTime = img.startTime ? Math.round((Date.now() - img.startTime) / 1000) : 0;
           return {
             ...img,
@@ -81,15 +64,36 @@ export const useImageUploader = () => {
         }
         return img;
       }));
+      
     } catch (error) {
       console.error('❌ ERROR:', error);
       setImages(prev => prev.map(img =>
-        img.id === imageId ? { ...img, uploadStatus: 'error' as const } : img
+        img.id === image.id ? { ...img, uploadStatus: 'error' as const } : img
       ));
+    } finally {
+      isProcessing = false;
+      setTimeout(() => processNext(), 100);
     }
+  };
+
+  const addFiles = useCallback((files: File[]) => {
+    const newImages: UploadedImage[] = files.map((file, index) => ({
+      id: `${Date.now()}-${index}`,
+      file,
+      originalUrl: URL.createObjectURL(file),
+      uploadProgress: 0,
+      uploadStatus: 'queued',
+      name: file.name,
+      size: file.size,
+      folderName: `folder_${Date.now()}_${index}`,
+      startTime: Date.now(),
+      originalFileName: file.name,
+    }));
+
+    setImages(prev => [...prev, ...newImages]);
+    queue.push(...newImages);
+    processNext();
   }, []);
-
-
 
   const removeImage = useCallback((imageId: string) => {
     setImages(prev => {
@@ -117,6 +121,8 @@ export const useImageUploader = () => {
     });
     setImages([]);
     setExpandedImageId(null);
+    queue = [];
+    isProcessing = false;
   }, [images]);
 
   return {

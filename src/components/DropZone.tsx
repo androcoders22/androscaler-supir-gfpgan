@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Upload, ImageIcon } from 'lucide-react';
+import { Upload, ImageIcon, CloudUpload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DropZoneProps {
@@ -67,7 +67,7 @@ export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
         <div className="relative z-10 text-center space-y-6">
           <div className="relative flex items-center justify-center">
             <div className="relative flex items-center gap-4 bg-primary/10 p-6 rounded-full border border-primary/20">
-              <Upload className="w-12 h-12 text-white animate-float" />
+              <CloudUpload className="w-12 h-12 text-white animate-bounce" />
             </div>
           </div>
 
