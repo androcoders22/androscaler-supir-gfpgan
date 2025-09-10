@@ -3,6 +3,7 @@ export interface UploadedImage {
   file: File;
   originalUrl: string;
   upscaledUrl?: string;
+  upscaledBeforeResizeUrl?: string;
   uploadProgress: number;
   uploadStatus: 'queued' | 'uploading' | 'uploaded' | 'upscaling' | 'color-grading' | 'completed' | 'error';
   name: string;

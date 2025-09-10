@@ -109,7 +109,7 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
             <p className="text-sm text-muted-foreground">
               {(image.size / 1024 / 1024).toFixed(2)} MB
               {image.uploadStatus === 'uploading' && ' • Uploading...'}
-              {image.uploadStatus === 'color-grading' && ' • Color grading...'}
+              {image.uploadStatus === 'color-grading' && ' • Removing Cast...'}
               {image.uploadStatus === 'upscaling' && ' • Upscaling...'}
               {image.uploadStatus === 'completed' && image.processingTime && (
                 <span className="inline-flex items-center gap-1 ml-1">
@@ -197,7 +197,7 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
             </div>
           ) : (
             /* Side by Side */
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Original */}
               <div className="space-y-3">
                 <h5 className="font-medium text-muted-foreground">Original</h5>
@@ -214,15 +214,32 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
               </div>
 
               {/* Upscaled */}
+              {image.upscaledBeforeResizeUrl && (
+                <div className="space-y-3">
+                  <h5 className="font-medium text-muted-foreground">Upscaled</h5>
+                  <div
+                    className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => openImageModal(image.upscaledBeforeResizeUrl!, `Upscaled ${image.name}`)}
+                  >
+                    <img
+                      src={image.upscaledBeforeResizeUrl}
+                      alt={`Upscaled ${image.name}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Final */}
               <div className="space-y-3">
-                <h5 className="font-medium text-muted-foreground">Upscaled</h5>
+                <h5 className="font-medium text-muted-foreground">(Downsized) 180 DPI</h5>
                 <div
                   className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => openImageModal(image.upscaledUrl!, `Upscaled ${image.name}`)}
+                  onClick={() => openImageModal(image.upscaledUrl!, `Final ${image.name}`)}
                 >
                   <img
                     src={image.upscaledUrl}
-                    alt={`Upscaled ${image.name}`}
+                    alt={`Final ${image.name}`}
                     className="w-full h-full object-cover"
                   />
                 </div>

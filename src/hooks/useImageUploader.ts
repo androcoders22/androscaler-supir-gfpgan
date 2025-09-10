@@ -45,7 +45,12 @@ export const useImageUploader = () => {
       console.log('✅ UPSCALE DONE');
 
       setImages(prev => prev.map(img =>
-        img.id === image.id ? { ...img, uploadProgress: 85, uploadStatus: 'uploading' as const } : img
+        img.id === image.id ? { 
+          ...img, 
+          uploadProgress: 85, 
+          uploadStatus: 'uploading' as const,
+          upscaledBeforeResizeUrl: upscaleResult.upscaled_url
+        } : img
       ));
 
       const fixResult = await apiService.fixImageMetadata(uploadResult.view_url, upscaleResult.upscaled_url);
