@@ -5,7 +5,14 @@ export interface UploadedImage {
   upscaledUrl?: string;
   upscaledBeforeResizeUrl?: string;
   uploadProgress: number;
-  uploadStatus: 'queued' | 'uploading' | 'uploaded' | 'upscaling' | 'color-grading' | 'completed' | 'error';
+  uploadStatus:
+    | "queued"
+    | "uploading"
+    | "uploaded"
+    | "upscaling"
+    | "color-grading"
+    | "completed"
+    | "error";
   name: string;
   size: number;
   folderName?: string;
@@ -13,6 +20,8 @@ export interface UploadedImage {
   startTime?: number;
   processingTime?: number;
   originalFileName?: string;
+  /** Which processing pipeline this image belongs to */
+  pipeline?: "upscale" | "color";
 }
 
-export type UploadStatus = 'idle' | 'uploading' | 'processing' | 'completed';
+export type UploadStatus = "idle" | "uploading" | "processing" | "completed";

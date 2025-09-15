@@ -5,9 +5,20 @@ import { cn } from "@/lib/utils";
 interface DropZoneProps {
   onFilesSelected: (files: File[]) => void;
   disabled?: boolean;
+  title?: string;
+  description?: string;
+  inputId?: string; // allow multiple instances on page
+  className?: string;
 }
 
-export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
+export const DropZone = ({
+  onFilesSelected,
+  disabled,
+  title = "Drop your images here",
+  description = "Select images to process.",
+  inputId = "file-input",
+  className,
+}: DropZoneProps) => {
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
@@ -44,12 +55,12 @@ export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
 
   const handleClick = useCallback(() => {
     if (disabled) return;
-    document.getElementById("file-input")?.click();
-  }, [disabled]);
+    document.getElementById(inputId)?.click();
+  }, [disabled, inputId]);
 
   return (
-    <div className="overflow-hidden flex flex-col min-h-screen">
-      <div className="flex items-center justify-center flex-1 p-4">
+    <div className={cn("flex flex-col", className)}>
+      <div className="flex items-center ">
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -73,12 +84,8 @@ export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-2xl font-bold text-foreground">
-                Drop your images here
-              </h3>
-              <p className="text-muted-foreground max-w-md">
-                Select images to upscale. Supports JPG, PNG, WEBP formats.
-              </p>
+              <h3 className="text-xl font-bold text-foreground">{title}</h3>
+              <p className="text-muted-foreground max-w-md">{description}</p>
             </div>
 
             <div className="flex justify-center items-center gap-2 text-sm text-foreground/80">
@@ -88,7 +95,7 @@ export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
           </div>
 
           <input
-            id="file-input"
+            id={inputId}
             type="file"
             multiple
             accept="image/*"
@@ -97,12 +104,6 @@ export const DropZone = ({ onFilesSelected, disabled }: DropZoneProps) => {
             disabled={disabled}
           />
         </div>
-      </div>
-      <div className="flex justify-end">
-        <div
-          className="text-secondary cursor-default w-5 h-5"
-          onClick={() => window.open("https://mohammad.is-a.dev", "_blank")}
-        ></div>
       </div>
     </div>
   );
