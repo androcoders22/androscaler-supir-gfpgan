@@ -27,7 +27,8 @@ export const ImageUploader = ({
       <DropZone
         onFilesSelected={addFiles}
         title={
-          title || (pipeline === "upscale" ? "Androscaler" : "Mini Androscaler")
+          title ||
+          (pipeline === "upscale" ? "Androscaler C1" : "Androscaler C3")
         }
         description="Upload images to upscale."
         inputId={inputId}
@@ -77,7 +78,7 @@ export const ImageUploader = ({
 
         <div className="pt-6">
           <div
-            onClick={() => document.getElementById("file-input")?.click()}
+            onClick={() => document.getElementById(inputId)?.click()}
             className="card-gradient border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer transition-all duration-300 hover:border-primary/50 group"
           >
             <div className="space-y-2">
