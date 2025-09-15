@@ -22,8 +22,8 @@ export const useImageUploader = () => {
         img.id === image.id ? { ...img, uploadProgress: 25, uploadStatus: 'uploading' as const } : img
       ));
 
-      const uploadResult = await apiService.uploadImage(image.file, image.folderName!);
-      console.log('✅ UPLOAD DONE');
+  const uploadResult = await apiService.uploadImage(image.file, image.folderName!);
+  console.log('✅ UPLOAD DONE', uploadResult);
 
       setImages(prev => prev.map(img =>
         img.id === image.id ? {
@@ -34,36 +34,42 @@ export const useImageUploader = () => {
         } : img
       ));
 
-      const colorGradeResult = await apiService.colorGrade(uploadResult.view_url);
-      console.log('✅ COLOR GRADING DONE');
+  const colorGradeResult = await apiService.colorGrade(uploadResult.view_url);
+  console.log('✅ COLOR GRADING DONE', colorGradeResult);
 
       setImages(prev => prev.map(img =>
         img.id === image.id ? { ...img, uploadProgress: 70, uploadStatus: 'upscaling' as const } : img
       ));
 
-      const upscaleResult = await apiService.upscaleImage(colorGradeResult.view_url);
-      console.log('✅ UPSCALE DONE');
+  const upscaleResult = await apiService.upscaleImage(colorGradeResult.view_url);
+  console.log('✅ UPSCALE DONE', upscaleResult);
 
       setImages(prev => prev.map(img =>
         img.id === image.id ? { 
           ...img, 
           uploadProgress: 85, 
           uploadStatus: 'uploading' as const,
-          upscaledBeforeResizeUrl: upscaleResult.upscaled_url
+          upscaledBeforeResizeUrl: upscaleResult.upscaled_url,
+          // Fallback: use raw upscaled as provisional final until metadata fix returns
+          upscaledUrl: img.upscaledUrl || upscaleResult.upscaled_url
         } : img
       ));
 
-      const fixResult = await apiService.fixImageMetadata(uploadResult.view_url, upscaleResult.upscaled_url);
-      console.log('✅ FIX METADATA DONE');
+  const fixResult = await apiService.fixImageMetadata(uploadResult.view_url, upscaleResult.upscaled_url);
+  console.log('✅ FIX METADATA DONE', fixResult);
 
       setImages(prev => prev.map(img => {
         if (img.id === image.id) {
           const processingTime = img.startTime ? Math.round((Date.now() - img.startTime) / 1000) : 0;
+          const finalUrl = fixResult?.final_image?.view_url || img.upscaledUrl || img.upscaledBeforeResizeUrl;
+          if (!finalUrl) {
+            console.warn('⚠️ No final URL found for image', image.id, fixResult);
+          }
           return {
             ...img,
             uploadProgress: 100,
             uploadStatus: 'completed' as const,
-            upscaledUrl: fixResult.final_image.view_url,
+            upscaledUrl: finalUrl,
             processingTime
           };
         }

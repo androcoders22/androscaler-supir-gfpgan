@@ -153,12 +153,18 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
       </div>
 
       {/* Expanded comparison view */}
-      {isExpanded && image.uploadStatus === 'completed' && image.upscaledUrl && (
+      {isExpanded && image.uploadStatus === 'completed' && (
         <div className="card-gradient border-x border-b border-border rounded-b-xl p-6 animate-in slide-in-from-top-2 duration-300">
+          {!image.upscaledBeforeResizeUrl && !image.upscaledUrl && (
+            <div className="text-sm text-destructive mb-4">
+              Final image URLs not available yet. Please wait or retry.
+            </div>
+          )}
           {comparisonMode ? (
             /* Slider Comparison */
             <div className="space-y-3">
               <h5 className="font-medium text-muted-foreground text-center">Comparison</h5>
+              {image.upscaledUrl ? (
               <div className="relative rounded-lg overflow-hidden bg-muted aspect-square">
                 {/* Upscaled Image (Background) */}
                 <img
@@ -194,6 +200,9 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
                 <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">Original</div>
                 <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">Upscaled</div>
               </div>
+              ) : (
+                <div className="text-sm text-muted-foreground text-center">Final image not ready.</div>
+              )}
             </div>
           ) : (
             /* Side by Side */
@@ -213,7 +222,7 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
                 </div>
               </div>
 
-              {/* Upscaled */}
+              {/* Upscaled (Raw) */}
               {image.upscaledBeforeResizeUrl && (
                 <div className="space-y-3">
                   <h5 className="font-medium text-muted-foreground">Upscaled</h5>
@@ -235,13 +244,19 @@ export const ImageChip = ({ image, isExpanded, onToggleExpand }: ImageChipProps)
                 <h5 className="font-medium text-muted-foreground">Downsized <span className="text-muted-foreground/60">200 PPI</span></h5>
                 <div
                   className="relative rounded-lg overflow-hidden bg-muted aspect-square cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => openImageModal(image.upscaledUrl!, `Final ${image.name}`)}
+                  onClick={() => image.upscaledUrl && openImageModal(image.upscaledUrl!, `Final ${image.name}`)}
                 >
-                  <img
-                    src={image.upscaledUrl}
-                    alt={`Final ${image.name}`}
-                    className="w-full h-full object-cover"
-                  />
+                  {image.upscaledUrl ? (
+                    <img
+                      src={image.upscaledUrl}
+                      alt={`Final ${image.name}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full text-xs text-muted-foreground">
+                      Final image pending
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
