@@ -113,7 +113,7 @@ export const ImageChip = ({
               <img
                 src={image.originalUrl}
                 alt={image.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 onError={() => setImageError(true)}
               />
             ) : (
@@ -131,7 +131,7 @@ export const ImageChip = ({
             <p className="text-sm text-muted-foreground">
               {(image.size / 1024 / 1024).toFixed(2)} MB
               {image.uploadStatus === "uploading" && " • Uploading..."}
-              {image.uploadStatus === "color-grading" && " • Removing Cast..."}
+              {image.uploadStatus === "color-grading" && " • Upscaling..."}
               {image.uploadStatus === "upscaling" && " • Upscaling..."}
               {image.uploadStatus === "completed" && image.processingTime && (
                 <span className="inline-flex items-center gap-1 ml-1">
@@ -198,7 +198,7 @@ export const ImageChip = ({
                   <img
                     src={image.upscaledUrl}
                     alt={`Upscaled ${image.name}`}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-contain"
                   />
                   {/* Original Image (Clipped) */}
                   <div
@@ -210,7 +210,7 @@ export const ImageChip = ({
                     <img
                       src={image.originalUrl}
                       alt={`Original ${image.name}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                   {/* Slider */}
